@@ -328,7 +328,8 @@ style.textContent = `
 
   /* \u2500\u2500 HERO \u2500\u2500 */
   #heroUI {
-    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    position: fixed; top: 45%; left: 50%; transform: translate(-50%, -50%);
+    width: min(92vw, 1100px);
     text-align: center; pointer-events: none; z-index: 100; user-select: none;
     transition: opacity 0.4s;
   }
@@ -473,6 +474,7 @@ style.textContent = `
 
   @media (max-width: 700px) {
     nav { padding: 18px 16px; }
+    #heroUI { top: 46%; }
     .nav-links { gap: 14px; }
     .nav-link { font-size: 9px; }
     .nav-invert { padding: 5px 9px; font-size: 9px; }
@@ -504,8 +506,8 @@ document.addEventListener("mousemove", (e) => {
   my = e.clientY;
 });
 (function trackCursor() {
-  rx += (mx - rx) * 0.13;
-  ry += (my - ry) * 0.13;
+  rx += (mx - rx) * 0.35;
+  ry += (my - ry) * 0.35;
   cursor.style.left = mx + "px";
   cursor.style.top = my + "px";
   cursorRing.style.left = rx + "px";
