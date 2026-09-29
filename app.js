@@ -370,49 +370,12 @@ style.textContent = `
   .hero-kicker::before { content: ''; width: 28px; height: 1px; background: var(--accent); }
   .hero-name {
     font-size: clamp(58px, 10vw, 148px); font-weight: 900;
-    line-height: 0.84; color: #fff; text-transform: none; position: relative; isolation: isolate;
-    font-family: "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
+    line-height: 0.84; color: #fff; text-transform: uppercase;
   }
   .hero-name span { display: block; }
-  .hero-name .liquid-text {
-    position: relative; z-index: 2; color: transparent;
-    background: linear-gradient(180deg, #f4ffff 0%, #9ff3ff 18%, #28b8e6 42%, #075682 58%, #3bd3f2 72%, #d9ffff 88%, #65cde7 100%);
-    background-size: 100% 220%; background-position: center 10%;
-    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-    -webkit-text-stroke: 2px rgba(221,253,255,0.9);
-    text-shadow:
-      0 2px 0 #087da3, 0 4px 0 #066382, 0 6px 0 #044a65,
-      0 9px 0 #023246, 0 14px 24px rgba(0,0,0,0.95);
-    filter: drop-shadow(0 0 14px rgba(55,211,244,0.35));
-    animation: liquidShine 5s ease-in-out infinite;
-  }
-  .hero-name .liquid-text::after {
-    content: attr(data-text); position: absolute; inset: 0; z-index: 3;
-    color: transparent; -webkit-text-stroke: 1px transparent;
-    background: linear-gradient(110deg, transparent 28%, rgba(255,255,255,0.95) 42%, transparent 52%);
-    background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-    animation: liquidSweep 4.8s ease-in-out infinite;
-  }
   .hero-name .outline {
-    position: relative; z-index: 1; color: #fff;
-    -webkit-text-stroke: 0;
-    text-shadow: 0 3px 0 #a8a8a8, 0 7px 16px rgba(0,0,0,0.8);
+    color: transparent; -webkit-text-stroke: 1px rgba(255,255,255,0.66);
   }
-  .name-drops { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
-  .name-drop {
-    position: absolute; display: block; width: var(--size); aspect-ratio: 1; border-radius: 50% 48% 55% 45%;
-    background: radial-gradient(circle at 30% 22%, #fff 0 9%, #bff8ff 14%, #32c7ef 42%, #07547b 72%);
-    border: 1px solid rgba(210,251,255,0.85);
-    box-shadow: inset -4px -5px 9px rgba(0,35,65,0.8), inset 3px 3px 6px rgba(255,255,255,0.7), 0 0 15px rgba(46,205,240,0.5), 0 8px 14px rgba(0,0,0,0.8);
-    animation: dropFloat 4s ease-in-out infinite;
-  }
-  .name-drop:nth-child(1) { --size: 24px; top: -8%; left: 10%; animation-delay: -1.1s; }
-  .name-drop:nth-child(2) { --size: 15px; top: 18%; right: 2%; animation-delay: -2.4s; }
-  .name-drop:nth-child(3) { --size: 20px; top: 43%; left: 28%; animation-delay: -0.4s; }
-  .name-drop:nth-child(4) { --size: 12px; top: 58%; right: 20%; animation-delay: -3.1s; }
-  @keyframes liquidShine { 0%,100% { background-position: center 15%; } 50% { background-position: center 85%; } }
-  @keyframes liquidSweep { 0%,25% { background-position: 160% 0; } 70%,100% { background-position: -80% 0; } }
-  @keyframes dropFloat { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-10px) scale(1.08); } }
   .hero-sub {
     font-size: clamp(11px, 1.3vw, 16px); font-weight: 200; letter-spacing: 0.35em;
     text-transform: uppercase; color: rgba(255,255,255,0.4); margin-top: 18px;
@@ -610,8 +573,7 @@ style.textContent = `
   @media (max-width: 700px) {
     nav { padding: 20px 22px; }
     #heroUI { top: 46%; width: 96vw; }
-    .hero-name { font-size: clamp(44px, 14vw, 64px); line-height: 0.88; transform: scaleX(0.82); }
-    .name-drop:nth-child(1), .name-drop:nth-child(3) { display: none; }
+    .hero-name { font-size: clamp(44px, 14vw, 64px); line-height: 0.88; transform: scaleX(0.72); }
     .hero-kicker { max-width: 270px; margin: 0 auto 14px; font-size: 8px; line-height: 1.5; }
     .hero-sub { max-width: 280px; margin: 16px auto 0; line-height: 1.7; letter-spacing: 0.22em; }
     .nav-links { gap: 14px; }
@@ -723,11 +685,7 @@ var heroUI = document.createElement("div");
 heroUI.id = "heroUI";
 heroUI.innerHTML = `
   <div class="hero-kicker">Digital experiences, built with intent</div>
-  <h1 class="hero-name">
-    <span class="liquid-text" data-text="Kamalesh">Kamalesh</span>
-    <span class="outline">M.</span>
-    <span class="name-drops" aria-hidden="true"><i class="name-drop"></i><i class="name-drop"></i><i class="name-drop"></i><i class="name-drop"></i></span>
-  </h1>
+  <h1 class="hero-name"><span>Kamalesh</span><span class="outline">M.</span></h1>
   <div class="hero-sub">Creative Developer &amp; Designer</div>
   <div class="hero-divider"></div>
   <div class="hero-scroll">\u2193 Scroll to Enter</div>
