@@ -13,7 +13,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.1;
+renderer.toneMappingExposure = 1.3;
 var root = document.getElementById("root") ?? document.body;
 root.appendChild(renderer.domElement);
 var scene = new THREE.Scene();
@@ -29,7 +29,7 @@ composer.addPass(bloom);
 var fxaa = new ShaderPass(FXAAShader);
 fxaa.uniforms["resolution"].value.set(1 / window.innerWidth, 1 / window.innerHeight);
 composer.addPass(fxaa);
-var ambient = new THREE.AmbientLight(16777215, 0.3);
+var ambient = new THREE.AmbientLight(16777215, 0.48);
 ambient.name = "amb";
 scene.add(ambient);
 function addDirLight(x, y, z, intensity, name) {
@@ -51,10 +51,14 @@ function addDirLight(x, y, z, intensity, name) {
 }
 addDirLight(10, 30, 10, 3, "dir1");
 addDirLight(-15, 20, -10, 1.2, "rim1");
+var accentLight = new THREE.PointLight(14221118, 28, 70, 2);
+accentLight.position.set(0, 12, 12);
+scene.add(accentLight);
 var whiteMat = new THREE.MeshStandardMaterial({ color: 16777215, roughness: 0.18, metalness: 0.12 });
 var darkMat = new THREE.MeshStandardMaterial({ color: 1118481, roughness: 0.55, metalness: 0.05 });
 var greyMat = new THREE.MeshStandardMaterial({ color: 10066329, roughness: 0.3, metalness: 0.1 });
 var mirrorMat = new THREE.MeshStandardMaterial({ color: 16777215, roughness: 0, metalness: 1 });
+var accentMat = new THREE.MeshStandardMaterial({ color: 14221118, emissive: 2636800, emissiveIntensity: 0.35, roughness: 0.24, metalness: 0.35 });
 var groundGeo = new THREE.PlaneGeometry(300, PAGE_DEPTH * (PAGES.length + 1));
 var groundMesh = new THREE.Mesh(groundGeo, darkMat);
 groundMesh.name = "masterGround";
@@ -79,6 +83,11 @@ function addCol(x, y, z, h, w, matChoice) {
 }
 (function buildHero() {
   const oz = 0;
+  const halo = new THREE.Mesh(new THREE.TorusGeometry(10.5, 0.08, 12, 180), accentMat);
+  halo.name = "heroHalo";
+  halo.position.set(0, 9, -7);
+  halo.rotation.x = Math.PI / 2.3;
+  scene.add(halo);
   const n = 36;
   for (let i = 0; i < n; i++) {
     const t = i / (n - 1) * 2 - 1;
@@ -279,34 +288,52 @@ function addCol(x, y, z, h, w, matChoice) {
 var style = document.createElement("style");
 style.textContent = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;600;700;900&display=swap');
+  :root { --accent: #d9ff3f; --line: rgba(255,255,255,0.16); }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { overflow: hidden; font-family: 'Inter', sans-serif; background: #000; color: #fff; }
+  ::selection { background: var(--accent); color: #050505; }
+
+  #atmosphere {
+    position: fixed; inset: 0; z-index: 80; pointer-events: none;
+    background:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px),
+      radial-gradient(circle at 50% 42%, transparent 18%, rgba(0,0,0,0.36) 68%, rgba(0,0,0,0.72) 100%);
+    background-size: 72px 72px, 72px 72px, 100% 100%;
+  }
+  #atmosphere::after {
+    content: ''; position: absolute; inset: 0; opacity: 0.12;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E");
+  }
 
   /* \u2500\u2500 NAV \u2500\u2500 */
   nav {
     position: fixed; top: 0; left: 0; right: 0; z-index: 200;
     display: flex; align-items: center; justify-content: space-between;
-    padding: 20px 32px;
+    padding: 24px 34px; background: linear-gradient(to bottom, rgba(0,0,0,0.72), transparent);
   }
-  .nav-logo { font-weight: 800; font-size: 14px; letter-spacing: -0.01em; cursor: default; }
+  .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 14px; cursor: pointer; }
+  .nav-mark { width: 8px; height: 8px; background: var(--accent); box-shadow: 0 0 18px rgba(217,255,63,0.7); }
   .nav-links { display: flex; gap: 36px; }
   .nav-link {
     font-size: 12px; font-weight: 400; letter-spacing: 0.1em; text-transform: uppercase;
     color: rgba(255,255,255,0.55); cursor: pointer; transition: color 0.2s;
     user-select: none;
   }
+  .nav-link::after { content: ''; display: block; width: 0; height: 1px; margin-top: 5px; background: var(--accent); transition: width 0.25s ease; }
   .nav-link:hover, .nav-link.active { color: #fff; }
+  .nav-link:hover::after, .nav-link.active::after { width: 100%; }
   .nav-invert {
     font-size: 11px; font-weight: 400; letter-spacing: 0.1em; text-transform: uppercase;
     color: rgba(255,255,255,0.45); cursor: pointer; transition: color 0.2s;
-    padding: 6px 16px; border: 1px solid rgba(255,255,255,0.2); border-radius: 20px;
+    padding: 7px 14px; border: 1px solid rgba(255,255,255,0.25);
   }
   .nav-invert:hover { color: #fff; border-color: #fff; }
 
   /* \u2500\u2500 PROGRESS BAR \u2500\u2500 */
   #progressBar {
     position: fixed; top: 0; left: 0; height: 2px;
-    background: rgba(255,255,255,0.8); width: 0%;
+    background: var(--accent); width: 0%; box-shadow: 0 0 14px rgba(217,255,63,0.65);
     z-index: 300; transition: width 0.1s;
   }
 
@@ -333,15 +360,25 @@ style.textContent = `
     text-align: center; pointer-events: none; z-index: 100; user-select: none;
     transition: opacity 0.4s;
   }
-  .hero-name {
-    font-size: clamp(48px, 8.5vw, 120px); font-weight: 900; letter-spacing: -0.045em;
-    line-height: 1; color: #fff;
+  #heroUI::before, #heroUI::after {
+    content: ''; position: absolute; top: 50%; width: clamp(30px, 8vw, 130px); height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35));
   }
+  #heroUI::before { right: calc(100% + 18px); }
+  #heroUI::after { left: calc(100% + 18px); transform: scaleX(-1); }
+  .hero-kicker { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 18px; color: rgba(255,255,255,0.58); font-size: 10px; text-transform: uppercase; letter-spacing: 0.22em; }
+  .hero-kicker::before { content: ''; width: 28px; height: 1px; background: var(--accent); }
+  .hero-name {
+    font-size: clamp(58px, 10vw, 148px); font-weight: 900;
+    line-height: 0.84; color: #fff; text-transform: uppercase;
+  }
+  .hero-name span { display: block; }
+  .hero-name .outline { color: transparent; -webkit-text-stroke: 1px rgba(255,255,255,0.66); }
   .hero-sub {
     font-size: clamp(11px, 1.3vw, 16px); font-weight: 200; letter-spacing: 0.35em;
     text-transform: uppercase; color: rgba(255,255,255,0.4); margin-top: 18px;
   }
-  .hero-divider { width: 36px; height: 1px; background: rgba(255,255,255,0.25); margin: 20px auto; }
+  .hero-divider { width: 54px; height: 2px; background: var(--accent); margin: 22px auto; }
   .hero-scroll {
     font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase;
     color: rgba(255,255,255,0.3); animation: pulse 2.5s ease-in-out infinite;
@@ -353,10 +390,20 @@ style.textContent = `
     z-index: 150; display: flex; align-items: center; justify-content: center;
     pointer-events: none; opacity: 0; transition: opacity 0.6s ease;
   }
+  .page-overlay::before {
+    content: ''; position: absolute; inset: 15% 12%; z-index: -1;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.84) 0%, rgba(0,0,0,0.55) 45%, transparent 76%);
+    filter: blur(16px);
+  }
   .page-overlay.visible { opacity: 1; pointer-events: all; }
   .overlay-inner {
-    max-width: 860px; width: 92%; text-align: center;
+    max-width: 860px; width: 92%; text-align: center; position: relative;
     animation: none;
+  }
+  .overlay-inner::before {
+    content: attr(data-index); position: absolute; top: -52px; left: 50%; transform: translateX(-50%);
+    color: rgba(255,255,255,0.035); font-size: clamp(90px, 14vw, 190px); font-weight: 900;
+    line-height: 1; pointer-events: none; z-index: -1;
   }
   .page-overlay.visible .overlay-inner {
     animation: slideUp 0.7s cubic-bezier(.16,1,.3,1) forwards;
@@ -370,8 +417,9 @@ style.textContent = `
     font-size: 11px; font-weight: 400; letter-spacing: 0.4em; text-transform: uppercase;
     color: rgba(255,255,255,0.3); margin-bottom: 18px;
   }
+  .section-eyebrow::before { content: ''; display: inline-block; width: 24px; height: 1px; margin: 0 10px 3px 0; background: var(--accent); }
   .section-title {
-    font-size: clamp(40px, 7vw, 96px); font-weight: 900; letter-spacing: -0.04em;
+    font-size: clamp(40px, 7vw, 96px); font-weight: 900; letter-spacing: 0;
     line-height: 1; margin-bottom: 28px;
   }
   .section-body {
@@ -382,7 +430,7 @@ style.textContent = `
   /* ABOUT STATS */
   .about-portrait {
     width: 148px; aspect-ratio: 1; margin: 0 auto 24px; overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.28); background: #111;
+    border: 1px solid rgba(255,255,255,0.28); border-bottom: 3px solid var(--accent); background: #111;
   }
   .about-portrait img {
     width: 100%; height: 100%; display: block; object-fit: cover; object-position: 50% 34%;
@@ -397,7 +445,7 @@ style.textContent = `
   .stat-cell {
     flex: 1; background: #000; padding: 24px 12px; text-align: center;
   }
-  .stat-num { font-size: 32px; font-weight: 900; letter-spacing: -0.03em; }
+  .stat-num { font-size: 32px; font-weight: 900; color: var(--accent); }
   .stat-label { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-top: 6px; }
 
   /* SKILLS */
@@ -410,11 +458,14 @@ style.textContent = `
     background: #000; padding: 22px 18px; text-align: left;
     transition: background 0.2s;
   }
+  .skill-cell { position: relative; overflow: hidden; }
+  .skill-cell::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 2px; background: var(--accent); transform: scaleY(0); transition: transform 0.3s ease; }
   .skill-cell:hover { background: rgba(255,255,255,0.04); }
+  .skill-cell:hover::before { transform: scaleY(1); }
   .skill-name { font-size: 13px; font-weight: 500; letter-spacing: 0.01em; margin-bottom: 4px; }
   .skill-sub { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.3); }
   .skill-bar { height: 1px; background: rgba(255,255,255,0.08); margin-top: 10px; }
-  .skill-fill { height: 100%; background: rgba(255,255,255,0.5); transition: width 1s ease; }
+  .skill-fill { height: 100%; background: var(--accent); transition: width 1s ease; }
 
   /* WORK */
   .work-grid {
@@ -423,11 +474,13 @@ style.textContent = `
     border: 1px solid rgba(255,255,255,0.08); margin-bottom: 36px;
   }
   .work-card {
-    display: block; background: #000; padding: 28px 24px; text-align: left;
+    position: relative; display: block; background: #000; padding: 28px 52px 28px 24px; text-align: left;
     color: #fff; text-decoration: none;
-    cursor: pointer; transition: background 0.2s;
+    cursor: pointer; overflow: hidden; transition: background 0.25s, transform 0.25s;
   }
-  .work-card:hover { background: rgba(255,255,255,0.04); }
+  .work-card::after { content: '\\2197'; position: absolute; top: 24px; right: 22px; color: var(--accent); font-size: 20px; transition: transform 0.25s; }
+  .work-card:hover { background: rgba(255,255,255,0.055); transform: translateY(-2px); }
+  .work-card:hover::after { transform: translate(3px, -3px); }
   .work-num { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255,255,255,0.2); margin-bottom: 12px; }
   .work-title { font-size: 16px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 10px; }
   .work-desc { font-size: 12px; font-weight: 300; line-height: 1.75; color: rgba(255,255,255,0.45); }
@@ -445,7 +498,23 @@ style.textContent = `
     color: rgba(255,255,255,0.6); text-decoration: none;
     transition: all 0.2s; cursor: pointer;
   }
-  .contact-link:hover { border-color: #fff; color: #fff; background: rgba(255,255,255,0.04); }
+  .contact-link:first-child { border-color: var(--accent); background: var(--accent); color: #050505; font-weight: 700; }
+  .contact-link:hover { border-color: var(--accent); color: var(--accent); background: rgba(217,255,63,0.05); }
+  .contact-link:first-child:hover { background: #fff; border-color: #fff; color: #050505; }
+
+  #viewportFrame { position: fixed; inset: 14px; z-index: 190; pointer-events: none; border: 1px solid rgba(255,255,255,0.08); }
+  #viewportFrame::before, #viewportFrame::after { content: ''; position: absolute; width: 34px; height: 3px; background: var(--accent); }
+  #viewportFrame::before { top: -1px; left: -1px; }
+  #viewportFrame::after { right: -1px; bottom: -1px; }
+  .availability { position: fixed; left: 34px; bottom: 30px; z-index: 210; display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,0.5); font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; }
+  .availability-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 12px var(--accent); animation: pulse 2s infinite; }
+
+  #telemetry {
+    position: fixed; top: 82px; right: 34px; z-index: 200; display: grid; gap: 4px;
+    text-align: right; color: rgba(255,255,255,0.28); font-size: 9px;
+    letter-spacing: 0.16em; text-transform: uppercase; pointer-events: none;
+  }
+  #telemetry strong { color: rgba(255,255,255,0.65); font-weight: 500; }
 
   /* SIDE LABELS */
   .side-label {
@@ -459,6 +528,8 @@ style.textContent = `
   /* CURSOR */
   #cursor { position: fixed; width: 8px; height: 8px; background: #fff; border-radius: 50%; pointer-events: none; z-index: 9999; transform: translate(-50%,-50%); mix-blend-mode: difference; }
   #cursorRing { position: fixed; width: 34px; height: 34px; border: 1px solid rgba(255,255,255,0.5); border-radius: 50%; pointer-events: none; z-index: 9998; transform: translate(-50%,-50%); mix-blend-mode: difference; transition: width 0.3s, height 0.3s; }
+  #cursorRing.is-hovering { width: 54px; height: 54px; border-color: var(--accent); }
+  @media (pointer: fine) { body, a, [data-page], #invertBtn { cursor: none; } }
 
   /* SCROLL SCROLL INDICATOR */
   #scrollIndicator {
@@ -471,10 +542,14 @@ style.textContent = `
     transition: background 0.3s, transform 0.3s;
   }
   .scroll-dot.active { background: #fff; transform: scale(1.4); }
+  .scroll-dot.active { background: var(--accent); box-shadow: 0 0 10px rgba(217,255,63,0.75); }
 
   @media (max-width: 700px) {
-    nav { padding: 18px 16px; }
-    #heroUI { top: 46%; }
+    nav { padding: 20px 22px; }
+    #heroUI { top: 46%; width: 96vw; }
+    .hero-name { font-size: clamp(44px, 14vw, 64px); line-height: 0.88; transform: scaleX(0.72); }
+    .hero-kicker { max-width: 270px; margin: 0 auto 14px; font-size: 8px; line-height: 1.5; }
+    .hero-sub { max-width: 280px; margin: 16px auto 0; line-height: 1.7; letter-spacing: 0.22em; }
     .nav-links { gap: 14px; }
     .nav-link { font-size: 9px; }
     .nav-invert { padding: 5px 9px; font-size: 9px; }
@@ -487,10 +562,17 @@ style.textContent = `
     .stat-cell { padding: 12px 6px; }
     .stat-num { font-size: 22px; }
     .stat-label { font-size: 8px; letter-spacing: 0.08em; }
-    #sideLeft, #sideRight, #sectionLabel, #cursor, #cursorRing { display: none; }
+    #viewportFrame { inset: 8px; }
+    .availability { left: 22px; bottom: 20px; }
+    #atmosphere { background-size: 44px 44px, 44px 44px, 100% 100%; }
+    #telemetry, #sideLeft, #sideRight, #sectionLabel, #cursor, #cursorRing { display: none; }
+    #heroUI::before, #heroUI::after { display: none; }
   }
 `;
 document.head.appendChild(style);
+var atmosphere = document.createElement("div");
+atmosphere.id = "atmosphere";
+(document.getElementById("root") ?? document.body).appendChild(atmosphere);
 var cursor = document.createElement("div");
 cursor.id = "cursor";
 (document.getElementById("root") ?? document.body).appendChild(cursor);
@@ -517,9 +599,20 @@ document.addEventListener("mousemove", (e) => {
 var progressBar = document.createElement("div");
 progressBar.id = "progressBar";
 (document.getElementById("root") ?? document.body).appendChild(progressBar);
+var viewportFrame = document.createElement("div");
+viewportFrame.id = "viewportFrame";
+(document.getElementById("root") ?? document.body).appendChild(viewportFrame);
+var availability = document.createElement("div");
+availability.className = "availability";
+availability.innerHTML = `<span class="availability-dot"></span>Available for select projects`;
+(document.getElementById("root") ?? document.body).appendChild(availability);
+var telemetry = document.createElement("div");
+telemetry.id = "telemetry";
+telemetry.innerHTML = `<span>Scene <strong id="sceneCount">01 / 05</strong></span><span id="coordinates">X 00.0 / Z 000.0</span>`;
+(document.getElementById("root") ?? document.body).appendChild(telemetry);
 var nav = document.createElement("nav");
 nav.innerHTML = `
-  <div class="nav-logo">Kamalesh. M</div>
+  <div class="nav-logo" data-page="0"><span class="nav-mark"></span>KM / 26</div>
   <div class="nav-links">
     <span class="nav-link" data-page="1">About</span>
     <span class="nav-link" data-page="2">Skills</span>
@@ -543,7 +636,7 @@ PAGES.forEach((p, i) => {
 var sideLeft = document.createElement("div");
 sideLeft.id = "sideLeft";
 sideLeft.className = "side-label";
-sideLeft.textContent = "Portfolio 2025";
+sideLeft.textContent = "Portfolio 2026";
 (document.getElementById("root") ?? document.body).appendChild(sideLeft);
 var sideRight = document.createElement("div");
 sideRight.id = "sideRight";
@@ -557,7 +650,8 @@ sectionLabel.innerHTML = `<div class="label-name" id="labelName">Hero</div><div 
 var heroUI = document.createElement("div");
 heroUI.id = "heroUI";
 heroUI.innerHTML = `
-  <div class="hero-name">Kamalesh. M</div>
+  <div class="hero-kicker">Digital experiences, built with intent</div>
+  <h1 class="hero-name"><span>Kamalesh</span><span class="outline">M.</span></h1>
   <div class="hero-sub">Creative Developer &amp; Designer</div>
   <div class="hero-divider"></div>
   <div class="hero-scroll">\u2193 Scroll to Enter</div>
@@ -634,7 +728,7 @@ Object.entries(overlayData).forEach(([page, data]) => {
   div.className = "page-overlay";
   div.id = `overlay-${page}`;
   div.innerHTML = `
-    <div class="overlay-inner">
+    <div class="overlay-inner" data-index="0${page}">
       <div class="section-eyebrow">${data.eyebrow}</div>
       <div class="section-title">${data.title}</div>
       <div class="section-body">${data.body}</div>
@@ -656,6 +750,10 @@ document.getElementById("invertBtn").addEventListener("click", () => {
 });
 document.querySelectorAll("[data-page]").forEach((el) => {
   el.addEventListener("click", () => navigateToPage(parseInt(el.dataset.page)));
+});
+document.querySelectorAll("a, [data-page], #invertBtn").forEach((el) => {
+  el.addEventListener("mouseenter", () => cursorRing.classList.add("is-hovering"));
+  el.addEventListener("mouseleave", () => cursorRing.classList.remove("is-hovering"));
 });
 var MAX_SCROLL = PAGE_DEPTH * (PAGES.length - 1) + 20;
 var targetScrollZ = 0;
@@ -698,6 +796,7 @@ function animate() {
     32 - currentScrollZ
   );
   camera.lookAt(camX * 0.15, 4, -currentScrollZ + 5);
+  document.getElementById("coordinates").textContent = `X ${camX.toFixed(1).padStart(4, "0")} / Z ${currentScrollZ.toFixed(1).padStart(5, "0")}`;
   const rawPage = Math.round(currentScrollZ / PAGE_DEPTH);
   const page = THREE.MathUtils.clamp(rawPage, 0, PAGES.length - 1);
   if (page !== currentPage) {
@@ -757,6 +856,12 @@ function animate() {
   }
   const ob = scene.getObjectByName("obelisk");
   if (ob) ob.rotation.y = t * 0.15;
+  const halo = scene.getObjectByName("heroHalo");
+  if (halo) {
+    halo.rotation.z = t * 0.12;
+    halo.rotation.x = Math.PI / 2.3 + Math.sin(t * 0.35) * 0.08;
+    halo.position.y = 9 + Math.sin(t * 0.7) * 0.35;
+  }
   allColumns.forEach((col, i) => {
     col.position.y = col.userData.baseY + Math.sin(i * 0.4 + t * 0.3) * 0.15;
   });
@@ -768,6 +873,7 @@ function updatePageUI(page) {
   document.querySelectorAll(".scroll-dot").forEach((d, i) => d.classList.toggle("active", i === page));
   document.querySelectorAll(".nav-link[data-page]").forEach((el) => el.classList.toggle("active", parseInt(el.dataset.page) === page));
   document.getElementById("labelName").textContent = PAGE_NAMES[page];
+  document.getElementById("sceneCount").textContent = `${String(page + 1).padStart(2, "0")} / 05`;
 }
 window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
